@@ -1,4 +1,5 @@
 name: Build MythicArsenal JAR
+
 on:
   push:
   workflow_dispatch:
@@ -6,26 +7,29 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./YOUR_FOLDER_NAME  # Replace with your actual folder name
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: maven
-          cache-dependency-path: '**/pom.xml'
 
-      - name: Compile JAR with Maven
-        run: mvn -B clean package
+      - name: Find pom.xml and Compile JAR
+        run: |
+          POM_FILE=$(find . -name "pom.xml" -print -quit)
+          if [ -z "$POM_FILE" ]; then
+            echo "ERROR: Repository mein kahin bhi pom.xml file nahi mili!"
+            exit 1
+          fi
+          echo "Found pom.xml at: $POM_FILE"
+          mvn -B -f "$POM_FILE" clean package
 
       - name: Upload Compiled Plugin JAR
         uses: actions/upload-artifact@v4
         with:
           name: MythicArsenal-2.2.0-JAR
-          path: YOUR_FOLDER_NAME/target/MythicArsenal-2.2.0.jar  # Update path here too
+          path: '**/target/*.jar'
