@@ -1,0 +1,15 @@
+name: MythicArsenal
+version: 2.2.0
+main: com.mythicarsenal.MythicArsenalPlugin
+api-version: '1.21'
+description: 50 Custom 3D Animated RPG Weapons & Relics for Paper 1.21.11
+commands:
+  mythic:
+    description: Opens the MythicArsenal 3D Custom Items GUI or gives items
+    usage: /mythic [gui|1-50|all]
+    aliases: [ma, citems]
+    permission: mythicarsenal.admin
+permissions:
+  mythicarsenal.admin:
+    description: Use /mythic
+    default: op
