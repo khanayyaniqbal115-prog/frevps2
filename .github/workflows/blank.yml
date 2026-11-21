@@ -1,35 +1,54 @@
-name: Build MythicArsenal JAR
+name: Build MythicArsenal Plugin
 
 on:
-  push:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
   build:
+    name: Build Plugin (.jar)
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          distribution: temurin
+          java-version: 21
+          cache: maven
 
-      - name: Find pom.xml and Compile JAR
+      - name: Build with Maven
         run: |
-          POM_FILE=$(find . -name "pom.xml" -print -quit)
-          if [ -z "$POM_FILE" ]; then
-            echo "ERROR: Repository mein kahin bhi pom.xml file nahi mili!"
+          if [ -f "pom.xml" ]; then
+            mvn -B clean package
+            mkdir -p build-out
+            find target -maxdepth 1 -name "*.jar" ! -name "original-*.jar" -exec cp {} build-out/ \;
+          elif [ -f "MythicArsenal/pom.xml" ]; then
+            mvn -B -f MythicArsenal/pom.xml clean package
+            mkdir -p build-out
+            find MythicArsenal/target -maxdepth 1 -name "*.jar" ! -name "original-*.jar" -exec cp {} build-out/ \;
+          else
+            echo "pom.xml nahi mila!"
             exit 1
           fi
-          echo "Found pom.xml at: $POM_FILE"
-          mvn -B -f "$POM_FILE" clean package
 
-      - name: Upload Compiled Plugin JAR
+      - name: Upload Plugin JAR
         uses: actions/upload-artifact@v4
         with:
-          name: MythicArsenal-2.2.0-JAR
-          path: '**/target/*.jar'
+          name: MythicArsenal-Plugin
+          path: build-out/*.jar
+
+      - name: Attach to GitHub Release (tag builds only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build-out/*.jar
